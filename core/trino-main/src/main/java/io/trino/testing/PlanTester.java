@@ -592,6 +592,7 @@ public class PlanTester
         notificationExecutor.shutdownNow();
         yieldExecutor.shutdownNow();
         catalogManager.stop();
+        cacheManagerRegistry.shutdown();
         finalizerService.destroy();
     }
 

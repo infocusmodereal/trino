@@ -77,7 +77,6 @@ public final class InMemoryBlobCache
         requireNonNull(source, "source is null");
         Optional<Slice> cachedEntry = getOrLoad(key, source);
         if (cachedEntry.isEmpty()) {
-            largeFileSkippedCount.incrementAndGet();
             return source;
         }
         return new MemoryBlobSource(cachedEntry.get());
@@ -94,7 +93,7 @@ public final class InMemoryBlobCache
     public void invalidate(Collection<CacheKey> keys)
     {
         requireNonNull(keys, "keys is null");
-        cache.invalidateAll(keys.stream().map(CacheKey::key).collect(toImmutableList()));
+        cache.invalidateAll(keys);
     }
 
     public void invalidatePrefix(String prefix)
@@ -155,8 +154,17 @@ public final class InMemoryBlobCache
     private Optional<Slice> getOrLoad(CacheKey key, BlobSource source)
             throws IOException
     {
+        Optional<Slice> cached = cache.getIfPresent(key);
+        if (cached != null) {
+            return cached;
+        }
+        long length = source.length();
+        if (length > maxContentLengthBytes) {
+            largeFileSkippedCount.incrementAndGet();
+            return Optional.empty();
+        }
         try {
-            return cache.get(key, () -> load(source));
+            return cache.get(key, () -> load(source, length));
         }
         catch (ExecutionException e) {
             Throwable cause = e.getCause();
@@ -170,13 +178,9 @@ public final class InMemoryBlobCache
         }
     }
 
-    private Optional<Slice> load(BlobSource source)
+    private Optional<Slice> load(BlobSource source, long length)
             throws IOException
     {
-        long length = source.length();
-        if (length > maxContentLengthBytes) {
-            return Optional.empty();
-        }
         byte[] buffer = new byte[toIntExact(length)];
         source.readFully(0, buffer, 0, buffer.length);
         return Optional.of(Slices.wrappedBuffer(buffer));

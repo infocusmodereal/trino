@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import static io.trino.filesystem.tracing.CacheSystemAttributes.CACHE_FILE_LOCATION;
+import static io.trino.filesystem.tracing.CacheSystemAttributes.CACHE_FILE_LOCATION_COUNT;
 import static io.trino.filesystem.tracing.CacheSystemAttributes.CACHE_KEY;
 import static io.trino.filesystem.tracing.Tracing.withTracing;
 import static java.util.Objects.requireNonNull;
@@ -65,6 +66,7 @@ public class TracingBlobCache
     public void invalidate(Collection<CacheKey> keys)
     {
         Span span = tracer.spanBuilder("BlobCache.invalidate")
+                .setAttribute(CACHE_FILE_LOCATION_COUNT, (long) keys.size())
                 .startSpan();
 
         withTracing(span, () -> delegate.invalidate(keys));

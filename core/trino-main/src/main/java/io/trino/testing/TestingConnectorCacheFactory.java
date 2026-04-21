@@ -36,31 +36,13 @@ public class TestingConnectorCacheFactory
         @Override
         public BlobSource get(CacheKey key, BlobSource source)
         {
-            return new BlobSource() {
-                @Override
-                public long length()
-                {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public void readFully(long position, byte[] buffer, int offset, int length)
-                {
-                    throw new UnsupportedOperationException();
-                }
-            };
+            return source;
         }
 
         @Override
-        public void invalidate(CacheKey key)
-        {
-            throw new UnsupportedOperationException();
-        }
+        public void invalidate(CacheKey key) {}
 
         @Override
-        public void invalidate(Collection<CacheKey> keys)
-        {
-            throw new UnsupportedOperationException();
-        }
+        public void invalidate(Collection<CacheKey> keys) {}
     }
 }

@@ -142,7 +142,7 @@ public class TracingCacheManager
         Span span = tracer.spanBuilder("AlluxioCacheManager.getDataFileChannel")
                 .setAttribute(CACHE_KEY, cacheKey)
                 .setAttribute(CACHE_FILE_READ_POSITION, positionInFile(pageId, position))
-                .setAttribute(CACHE_FILE_READ_POSITION, (long) length)
+                .setAttribute(CACHE_FILE_READ_SIZE, (long) length)
                 .startSpan();
         return withTracing(span, () -> delegate.getDataFileChannel(pageId, position, length, cacheContext));
     }
@@ -206,7 +206,7 @@ public class TracingCacheManager
                 .setAttribute(CACHE_FILE_READ_POSITION, positionInFile(pageId, pageOffset))
                 .setAttribute(CACHE_FILE_READ_SIZE, (long) bytesToRead)
                 .startSpan();
-        return withTracing(span, () -> delegate.get(pageId, bytesToRead, buffer, offsetInBuffer));
+        return withTracing(span, () -> delegate.get(pageId, pageOffset, bytesToRead, buffer, offsetInBuffer));
     }
 
     @Override

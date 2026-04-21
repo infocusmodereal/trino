@@ -33,12 +33,15 @@ import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.airlift.configuration.ConfigBinder.configBinder;
 
 public class AlluxioBlobCacheManagerFactory
         implements BlobCacheManagerFactory
 {
+    private static final AtomicBoolean metricsInitialized = new AtomicBoolean();
+
     @Override
     public String getName()
     {
@@ -71,10 +74,12 @@ public class AlluxioBlobCacheManagerFactory
 
         Injector injector = app.initialize();
 
-        Properties metricProps = new Properties();
-        metricProps.put("sink.jmx.class", "alluxio.metrics.sink.JmxSink");
-        metricProps.put("sink.jmx.domain", "org.alluxio");
-        MetricsSystem.startSinksFromConfig(new MetricsConfig(metricProps));
+        if (metricsInitialized.compareAndSet(false, true)) {
+            Properties metricProps = new Properties();
+            metricProps.put("sink.jmx.class", "alluxio.metrics.sink.JmxSink");
+            metricProps.put("sink.jmx.domain", "org.alluxio");
+            MetricsSystem.startSinksFromConfig(new MetricsConfig(metricProps));
+        }
 
         return injector.getInstance(AlluxioBlobCacheManager.class);
     }

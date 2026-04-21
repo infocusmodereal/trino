@@ -13,6 +13,7 @@
  */
 package io.trino.filesystem.cache;
 
+import io.airlift.log.Logger;
 import io.trino.filesystem.FileIterator;
 import io.trino.filesystem.Location;
 import io.trino.filesystem.TrinoFileSystem;
@@ -32,6 +33,8 @@ import static java.util.Objects.requireNonNull;
 public final class CacheFileSystem
         implements TrinoFileSystem
 {
+    private static final Logger log = Logger.get(CacheFileSystem.class);
+
     private final TrinoFileSystem delegate;
     private final BlobCache cache;
     private final CacheKeyProvider keyProvider;
@@ -151,8 +154,8 @@ public final class CacheFileSystem
             keyProvider.getCacheKey(delegate.newInputFile(location))
                     .ifPresent(cache::invalidate);
         }
-        catch (IOException ignored) {
-            // File may not exist or be otherwise inaccessible; nothing to invalidate.
+        catch (IOException e) {
+            log.warn(e, "Failed to invalidate cache entry for %s", location);
         }
     }
 
@@ -164,8 +167,8 @@ public final class CacheFileSystem
                 invalidate(iterator.next().location());
             }
         }
-        catch (IOException ignored) {
-            // Directory may not exist or listing may fail; nothing to invalidate.
+        catch (IOException e) {
+            log.warn(e, "Failed to invalidate cache entries under %s", location);
         }
     }
 }

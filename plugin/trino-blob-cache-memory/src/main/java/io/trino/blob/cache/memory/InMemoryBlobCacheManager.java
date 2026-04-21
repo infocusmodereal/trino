@@ -23,6 +23,7 @@ import io.trino.spi.catalog.CatalogName;
 import java.io.IOException;
 import java.util.Collection;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
@@ -41,13 +42,20 @@ public class InMemoryBlobCacheManager
     public BlobCache createBlobCache(CatalogName catalog)
     {
         requireNonNull(catalog, "catalog is null");
-        return new CatalogScopedBlobCache(sharedCache, catalog.toString() + "\0");
+        return new CatalogScopedBlobCache(sharedCache, prefix(catalog));
     }
 
     @Override
     public void drop(CatalogName catalog)
     {
-        sharedCache.invalidatePrefix(catalog.toString() + "\0");
+        sharedCache.invalidatePrefix(prefix(catalog));
+    }
+
+    private static String prefix(CatalogName catalog)
+    {
+        String name = catalog.toString();
+        checkArgument(!name.contains("\0"), "catalog name contains NUL byte: %s", name);
+        return name + "\0";
     }
 
     @Override

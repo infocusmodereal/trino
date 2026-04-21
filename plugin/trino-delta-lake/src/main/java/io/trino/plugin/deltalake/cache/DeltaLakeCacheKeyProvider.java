@@ -60,6 +60,6 @@ public class DeltaLakeCacheKeyProvider
                 || path.contains("/" + STARBURST_META_DIR + "/")) {
             return Optional.empty();
         }
-        return Optional.of(new CacheKey(path));
+        return Optional.of(new CacheKey(inputFile.location().toString()));
     }
 }

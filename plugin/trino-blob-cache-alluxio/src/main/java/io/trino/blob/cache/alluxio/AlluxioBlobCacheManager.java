@@ -60,8 +60,14 @@ public class AlluxioBlobCacheManager
         return catalogs.computeIfAbsent(catalog, c -> {
             AlluxioCacheStats stats = new AlluxioCacheStats();
             ObjectName name = statsObjectName(catalog);
-            exporter.export(name.getCanonicalName(), stats);
-            return new CatalogEntry(stats, name, new CatalogScopedBlobCache(sharedCache, catalog, tracer, stats));
+            CatalogEntry entry = new CatalogEntry(stats, name, new CatalogScopedBlobCache(sharedCache, catalog, tracer, stats));
+            try {
+                exporter.export(name.getCanonicalName(), stats);
+            }
+            catch (Exception e) {
+                log.warn(e, "Failed to register AlluxioCacheStats MBean for catalog %s", catalog);
+            }
+            return entry;
         }).blobCache();
     }
 
@@ -87,7 +93,7 @@ public class AlluxioBlobCacheManager
             sharedCache.shutdown();
         }
         catch (Exception e) {
-            throw new RuntimeException(e);
+            log.warn(e, "Failed to shut down shared Alluxio blob cache");
         }
     }
 
@@ -95,7 +101,7 @@ public class AlluxioBlobCacheManager
     {
         try {
             return ObjectName.getInstance(
-                    "io.trino.blob.cache.alluxio:catalog=" + catalog + ",name=" + catalog + ",type=" + AlluxioCacheStats.class.getSimpleName());
+                    "io.trino.blob.cache.alluxio:catalog=" + ObjectName.quote(catalog.toString()) + ",type=" + AlluxioCacheStats.class.getSimpleName());
         }
         catch (MalformedObjectNameException e) {
             throw new IllegalArgumentException("Invalid catalog name: " + catalog, e);

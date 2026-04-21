@@ -315,12 +315,14 @@ public class CoordinatorDynamicCatalogManager
 
             catalogStore.removeCatalog(catalogName);
             removed = activeCatalogs.remove(catalogName) != null;
+            if (removed) {
+                cacheManagerRegistry.drop(catalogName);
+            }
         }
 
         if (!removed && !exists) {
             throw new TrinoException(CATALOG_NOT_FOUND, format("Catalog '%s' not found", catalogName));
         }
-        cacheManagerRegistry.drop(catalogName);
         // Do not shut down the catalog, because there may still be running queries using this catalog.
         // Catalog shutdown logic will be added later.
     }

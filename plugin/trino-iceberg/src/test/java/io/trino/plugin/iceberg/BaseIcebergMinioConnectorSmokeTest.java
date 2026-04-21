@@ -24,6 +24,7 @@ import io.trino.metastore.HiveType;
 import io.trino.metastore.Table;
 import io.trino.plugin.hive.containers.Hive3MinioDataLake;
 import io.trino.plugin.hive.metastore.thrift.BridgingHiveMetastore;
+import io.trino.spi.Plugin;
 import io.trino.testing.QueryRunner;
 import io.trino.testing.minio.MinioClient;
 import io.trino.testing.sql.TestTable;
@@ -105,7 +106,7 @@ public abstract class BaseIcebergMinioConnectorSmokeTest
                                 .withSchemaProperties(Map.of("location", "'s3://" + bucketName + "/" + schemaName + "'"))
                                 .build());
         getBlobCacheProperties().ifPresent(properties -> {
-            builder.withPlugin(new AlluxioBlobCachePlugin());
+            builder.withPlugin(getBlobCachePlugin());
             builder.withBlobCache(getBlobCacheType(), properties);
         });
         return builder.build();
@@ -119,6 +120,11 @@ public abstract class BaseIcebergMinioConnectorSmokeTest
     protected String getBlobCacheType()
     {
         return "alluxio";
+    }
+
+    protected Plugin getBlobCachePlugin()
+    {
+        return new AlluxioBlobCachePlugin();
     }
 
     protected Optional<Map<String, String>> getBlobCacheProperties()

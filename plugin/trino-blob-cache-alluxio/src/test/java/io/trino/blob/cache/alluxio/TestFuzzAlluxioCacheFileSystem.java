@@ -30,8 +30,10 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Random;
 
 import static java.lang.Math.min;
@@ -199,7 +201,23 @@ public class TestFuzzAlluxioCacheFileSystem
         @Override
         public void close()
         {
-            tempDirectory.toFile().delete();
+            if (tempDirectory == null) {
+                return;
+            }
+            try (var paths = Files.walk(tempDirectory)) {
+                paths.sorted(Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            }
+                            catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 

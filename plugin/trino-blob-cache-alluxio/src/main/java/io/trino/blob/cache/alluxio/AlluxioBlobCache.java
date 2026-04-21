@@ -60,6 +60,10 @@ public class AlluxioBlobCache
         return new AlluxioBlobSource(tracer, source, key.key(), status, tracingCacheManager, config, statistics);
     }
 
+    // TODO: explicit invalidation is not implemented; entries are evicted by TTL and size limits.
+    // Implementing this requires mapping a CacheKey back to the Alluxio PageIds stored for the blob
+    // (see AlluxioBlobSource.pageId) and invoking CacheManager.delete for each, which needs the
+    // source length that is not known at invalidation time.
     public void invalidate(CacheKey key) {}
 
     public void invalidate(Collection<CacheKey> keys) {}

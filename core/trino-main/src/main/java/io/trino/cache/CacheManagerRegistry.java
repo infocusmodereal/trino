@@ -116,10 +116,10 @@ public class CacheManagerRegistry
         return tier -> {
             BlobCacheManager manager = blobCacheManagers.get(tier);
             if (manager == null) {
-                log.warn("Catalog %s requested blob cache manager tier %s but none registered, using noop".formatted(catalog, tier));
+                log.warn("Catalog %s requested blob cache manager tier %s but none registered, using noop", catalog, tier);
                 return new NoopBlobCache();
             }
-            log.info("Created new blob cache on tier %s for catalog %s", tier, catalog);
+            log.debug("Created new blob cache on tier %s for catalog %s", tier, catalog);
             return manager.createBlobCache(catalog);
         };
     }

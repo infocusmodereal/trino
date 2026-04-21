@@ -32,6 +32,7 @@ import io.trino.plugin.deltalake.transactionlog.TransactionLogAccess;
 import io.trino.plugin.hive.TestingHivePlugin;
 import io.trino.plugin.hive.containers.HiveHadoop;
 import io.trino.plugin.hive.metastore.thrift.BridgingHiveMetastore;
+import io.trino.spi.Plugin;
 import io.trino.spi.QueryId;
 import io.trino.sql.planner.OptimizerConfig.JoinDistributionType;
 import io.trino.testing.BaseConnectorSmokeTest;
@@ -238,7 +239,7 @@ public abstract class BaseDeltaLakeConnectorSmokeTest
                         .buildOrThrow())
                 .setSchemaLocation(getLocationForTable(bucketName, SCHEMA));
         getBlobCacheProperties().ifPresent(properties -> {
-            builder.withPlugin(new AlluxioBlobCachePlugin());
+            builder.withPlugin(getBlobCachePlugin());
             builder.withBlobCache(getBlobCacheType(), properties);
         });
         return builder.build();
@@ -247,6 +248,11 @@ public abstract class BaseDeltaLakeConnectorSmokeTest
     protected String getBlobCacheType()
     {
         return "alluxio";
+    }
+
+    protected Plugin getBlobCachePlugin()
+    {
+        return new AlluxioBlobCachePlugin();
     }
 
     protected Optional<Map<String, String>> getBlobCacheProperties()

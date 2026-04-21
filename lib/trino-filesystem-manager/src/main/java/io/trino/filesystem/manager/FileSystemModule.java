@@ -18,7 +18,7 @@ import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.OptionalBinder;
 import io.airlift.configuration.AbstractConfigurationAwareModule;
 import io.airlift.configuration.ConfigPropertyMetadata;
 import io.opentelemetry.api.trace.Tracer;
@@ -123,16 +123,16 @@ public class FileSystemModule
         newOptionalBinder(binder, CachingHostAddressProvider.class).setDefault().to(DefaultCachingHostAddressProvider.class).in(Scopes.SINGLETON);
         newOptionalBinder(binder, CacheKeyProvider.class).setDefault().to(DefaultCacheKeyProvider.class).in(Scopes.SINGLETON);
 
-        Optional<BlobCache> blobCache = Optional.empty();
-
+        OptionalBinder<BlobCache> blobCacheBinder = newOptionalBinder(binder, BlobCache.class);
+        if (config.isCacheEnabled() && coordinatorFileCaching && isCoordinator) {
+            throw new IllegalStateException("Cannot enable both fs.cache.enabled (DISK) and coordinator file caching (MEMORY) at the same time");
+        }
         if (config.isCacheEnabled()) {
-            blobCache = Optional.of(context.getCacheFactory().createBlobCache(CacheTier.DISK));
+            blobCacheBinder.setBinding().toInstance(context.getCacheFactory().createBlobCache(CacheTier.DISK));
         }
         else if (coordinatorFileCaching && isCoordinator) {
-            blobCache = Optional.of(context.getCacheFactory().createBlobCache(CacheTier.MEMORY));
+            blobCacheBinder.setBinding().toInstance(context.getCacheFactory().createBlobCache(CacheTier.MEMORY));
         }
-
-        binder.bind(new TypeLiteral<Optional<BlobCache>>() {}).toInstance(blobCache);
     }
 
     @Provides
